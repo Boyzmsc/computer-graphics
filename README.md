@@ -1,2 +1,1 @@
-# computer-graphics
-Learning Computer-graphics
+# Computer Graphics
