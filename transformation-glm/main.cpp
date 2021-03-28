@@ -123,7 +123,7 @@ void glm_transform_test()
 
     // TODO 9)
     mat_Translate = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 2.0f));
-    mat_Rotate = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 2.0, -1.0f));
+    mat_Rotate = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 2.0f, -1.0f));
     mat_Scale = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 1.0f, 1.5f));
     mat_LookAt = glm::lookAt(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     mat_Ortho = glm::ortho(1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f);
