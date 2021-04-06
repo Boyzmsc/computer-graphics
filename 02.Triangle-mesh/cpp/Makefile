@@ -8,7 +8,6 @@ RM = rm -rf
 
 all: $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) -o $(EXECUTABLE) $(SOURCES) $(LDFLAGS)
-	./mesh
 	
 clean:
 	$(RM) *.o $(EXECUTABLE)
