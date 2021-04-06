@@ -25,60 +25,65 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Model 관련 설정
 ////////////////////////////////////////////////////////////////////////////////
-enum MeshModel { kCube, kAvocado, kDonut }; 
-enum MeshType { kTriangleSoup, kVlistTriangles };
+enum MeshModel
+{
+  kCube,
+  kAvocado,
+  kDonut
+};
+enum MeshType
+{
+  kTriangleSoup,
+  kVlistTriangles
+};
 
 MeshModel g_mesh_model = kCube;
-MeshType  g_mesh_type = kTriangleSoup;
+MeshType g_mesh_type = kTriangleSoup;
 
-GLsizeiptr  g_position_size, g_color_size, g_index_size;      // the size in bytes of vbo & ibo
-void        *g_position_data, *g_color_data, *g_index_data;   // a pointer to data will be copied
-size_t      g_num_position = 0;   // # of vertex info. in a triangle soup
-size_t      g_num_index = 0;    // # of index info. in a vertex list & triangles
-
+GLsizeiptr g_position_size, g_color_size, g_index_size; // the size in bytes of vbo & ibo
+void *g_position_data, *g_color_data, *g_index_data;    // a pointer to data will be copied
+size_t g_num_position = 0;                              // # of vertex info. in a triangle soup
+size_t g_num_index = 0;                                 // # of index info. in a vertex list & triangles
 
 ////////////////////////////////////////////////////////////////////////////////
 /// 쉐이더 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
-GLuint  program;          // 쉐이더 프로그램 객체의 레퍼런스 값
-GLint   loc_a_position;   // attribute 변수 a_position 위치
-GLint   loc_a_color;      // attribute 변수 a_color 위치
+GLuint program;       // 쉐이더 프로그램 객체의 레퍼런스 값
+GLint loc_a_position; // attribute 변수 a_position 위치
+GLint loc_a_color;    // attribute 변수 a_color 위치
 
-GLint   loc_u_PVM;        // uniform 변수 u_PVM 위치
+GLint loc_u_PVM; // uniform 변수 u_PVM 위치
 
-GLuint  position_buffer;  // GPU 메모리에서 position_buffer의 위치
-GLuint  color_buffer;     // GPU 메모리에서 color_buffer의 위치
-GLuint  index_buffer;     // GPU 메모리에서 index_buffer의 위치
+GLuint position_buffer; // GPU 메모리에서 position_buffer의 위치
+GLuint color_buffer;    // GPU 메모리에서 color_buffer의 위치
+GLuint index_buffer;    // GPU 메모리에서 index_buffer의 위치
 
-GLuint create_shader_from_file(const std::string& filename, GLuint shader_type);
+GLuint create_shader_from_file(const std::string &filename, GLuint shader_type);
 void init_shader_program();
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 /// 변환 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
-glm::mat4     mat_model, mat_view, mat_proj;
-glm::mat4     mat_PVM;
+glm::mat4 mat_model, mat_view, mat_proj;
+glm::mat4 mat_PVM;
 
 float g_angle = 0.0f;
 
 void set_transform();
 ////////////////////////////////////////////////////////////////////////////////
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 /// 렌더링 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
 
-void init_buffer_objects();     // VBO init 함수: GPU의 VBO를 초기화하는 함수.
+void init_buffer_objects(); // VBO init 함수: GPU의 VBO를 초기화하는 함수.
 void update_buffer_objects();
-void render_object();           // rendering 함수: 물체(삼각형)를 렌더링하는 함수.
+void render_object(); // rendering 함수: 물체(삼각형)를 렌더링하는 함수.
 ////////////////////////////////////////////////////////////////////////////////
 
-
 // GLSL 파일을 읽어서 컴파일한 후 쉐이더 객체를 생성하는 함수
-GLuint create_shader_from_file(const std::string& filename, GLuint shader_type)
+GLuint create_shader_from_file(const std::string &filename, GLuint shader_type)
 {
   GLuint shader = 0;
 
@@ -88,20 +93,20 @@ GLuint create_shader_from_file(const std::string& filename, GLuint shader_type)
   std::string shader_string;
 
   shader_string.assign(
-    (std::istreambuf_iterator<char>(shader_file)),
-    std::istreambuf_iterator<char>());
+      (std::istreambuf_iterator<char>(shader_file)),
+      std::istreambuf_iterator<char>());
 
   // Get rid of BOM in the head of shader_string
   // Because, some GLSL compiler (e.g., Mesa Shader compiler) cannot handle UTF-8 with BOM
-  if (shader_string.compare(0, 3, "\xEF\xBB\xBF") == 0)  // Is the file marked as UTF-8?
+  if (shader_string.compare(0, 3, "\xEF\xBB\xBF") == 0) // Is the file marked as UTF-8?
   {
     std::cout << "Shader code (" << filename << ") is written in UTF-8 with BOM" << std::endl;
     std::cout << "  When we pass the shader code to GLSL compiler, we temporarily get rid of BOM" << std::endl;
-    shader_string.erase(0, 3);                  // Now get rid of the BOM.
+    shader_string.erase(0, 3); // Now get rid of the BOM.
   }
 
-  const GLchar* shader_src = shader_string.c_str();
-  glShaderSource(shader, 1, (const GLchar * *)& shader_src, NULL);
+  const GLchar *shader_src = shader_string.c_str();
+  glShaderSource(shader, 1, (const GLchar **)&shader_src, NULL);
   glCompileShader(shader);
 
   GLint is_compiled;
@@ -128,14 +133,12 @@ GLuint create_shader_from_file(const std::string& filename, GLuint shader_type)
 // vertex shader와 fragment shader를 링크시켜 program을 생성하는 함수
 void init_shader_program()
 {
-  GLuint vertex_shader
-    = create_shader_from_file("./shader/vertex.glsl", GL_VERTEX_SHADER);
+  GLuint vertex_shader = create_shader_from_file("./shader/vertex.glsl", GL_VERTEX_SHADER);
 
   std::cout << "vertex_shader id: " << vertex_shader << std::endl;
   assert(vertex_shader != 0);
 
-  GLuint fragment_shader
-    = create_shader_from_file("./shader/fragment.glsl", GL_FRAGMENT_SHADER);
+  GLuint fragment_shader = create_shader_from_file("./shader/fragment.glsl", GL_FRAGMENT_SHADER);
 
   std::cout << "fragment_shader id: " << fragment_shader << std::endl;
   assert(fragment_shader != 0);
@@ -172,7 +175,7 @@ void init_shader_program()
   loc_a_color = glGetAttribLocation(program, "a_color");
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
   if (key == GLFW_KEY_1 && action == GLFW_PRESS)
   {
@@ -218,28 +221,112 @@ void update_buffer_objects()
   /// TODO: 아래 코드를 적절히 수정하여 프로그램을 완성하시오.
   /////////////////////////////////////////////////////////////////////
 
-  g_position_size = sizeof(cube::triangle_soup::position);
-  g_position_data = cube::triangle_soup::position;
+  if (g_mesh_type == kTriangleSoup)
+  {
+    switch (g_mesh_model)
+    {
+    case kCube:
+      g_position_size = sizeof(cube::triangle_soup::position);
+      g_position_data = cube::triangle_soup::position;
 
-  g_color_size = sizeof(cube::triangle_soup::color);
-  g_color_data = cube::triangle_soup::color;
+      g_color_size = sizeof(cube::triangle_soup::color);
+      g_color_data = cube::triangle_soup::color;
 
-  assert(g_position_size == g_color_size);
-  g_num_position = cube::triangle_soup::num_position;
+      assert(g_position_size == g_color_size);
+      g_num_position = cube::triangle_soup::num_position;
+      break;
 
+    case kAvocado:
+      g_position_size = sizeof(avocado::triangle_soup::position);
+      g_position_data = avocado::triangle_soup::position;
+
+      g_color_size = sizeof(avocado::triangle_soup::color);
+      g_color_data = avocado::triangle_soup::color;
+
+      assert(g_position_size == g_color_size);
+      g_num_position = avocado::triangle_soup::num_position;
+      break;
+
+    case kDonut:
+      g_position_size = sizeof(donut::triangle_soup::position);
+      g_position_data = donut::triangle_soup::position;
+
+      g_color_size = sizeof(donut::triangle_soup::color);
+      g_color_data = donut::triangle_soup::color;
+
+      assert(g_position_size == g_color_size);
+      g_num_position = donut::triangle_soup::num_position;
+      break;
+
+    default:
+      break;
+    }
+  }
+  else if (g_mesh_type == kVlistTriangles)
+  {
+    switch (g_mesh_model)
+    {
+    case kCube:
+      g_position_size = sizeof(cube::vlist_triangles::position);
+      g_position_data = cube::vlist_triangles::position;
+
+      g_color_size = sizeof(cube::vlist_triangles::color);
+      g_color_data = cube::vlist_triangles::color;
+
+      g_index_size = sizeof(cube::vlist_triangles::index);
+      g_index_data = cube::vlist_triangles::index;
+
+      assert(g_position_size == g_color_size);
+      g_num_index = cube::vlist_triangles::num_index;
+      break;
+
+    case kAvocado:
+      g_position_size = sizeof(avocado::vlist_triangles::position);
+      g_position_data = avocado::vlist_triangles::position;
+
+      g_color_size = sizeof(avocado::vlist_triangles::color);
+      g_color_data = avocado::vlist_triangles::color;
+
+      g_index_size = sizeof(avocado::vlist_triangles::index);
+      g_index_data = avocado::vlist_triangles::index;
+
+      assert(g_position_size == g_color_size);
+      g_num_index = avocado::vlist_triangles::num_index;
+      break;
+
+    case kDonut:
+      g_position_size = sizeof(donut::vlist_triangles::position);
+      g_position_data = donut::vlist_triangles::position;
+
+      g_color_size = sizeof(donut::vlist_triangles::color);
+      g_color_data = donut::vlist_triangles::color;
+
+      g_index_size = sizeof(donut::vlist_triangles::index);
+      g_index_data = donut::vlist_triangles::index;
+
+      assert(g_position_size == g_color_size);
+      g_num_index = donut::vlist_triangles::num_index;
+      break;
+
+    default:
+      break;
+    }
+  }
 
   // VBO
-  glBindBuffer(GL_ARRAY_BUFFER, position_buffer); 
+  glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
   glBufferData(GL_ARRAY_BUFFER, g_position_size, g_position_data, GL_STATIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
   glBufferData(GL_ARRAY_BUFFER, g_color_size, g_color_data, GL_STATIC_DRAW);
 
   // IBO
-  // ...
-
+  if (g_mesh_type == kVlistTriangles)
+  {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, g_index_size, g_index_data, GL_STATIC_DRAW);
+  }
 }
-
 
 void init_buffer_objects()
 {
@@ -250,18 +337,16 @@ void init_buffer_objects()
   glGenBuffers(1, &index_buffer);
 
   update_buffer_objects();
-
 }
 
-void set_transform() 
+void set_transform()
 {
   mat_view = glm::mat4(1.0f);
-  mat_proj = glm::mat4(1.0f); 
+  mat_proj = glm::mat4(1.0f);
 
   mat_model = glm::rotate(glm::mat4(1.0f), g_angle, glm::vec3(0.0f, 1.0f, 0.0f));
   mat_model = mat_model * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
 }
-
 
 void render_object()
 {
@@ -280,18 +365,24 @@ void render_object()
   // 버텍스 쉐이더의 attribute 중 a_position 부분 활성화
   glEnableVertexAttribArray(loc_a_position);
   // 현재 배열 버퍼에 있는 데이터를 버텍스 쉐이더 a_position에 해당하는 attribute와 연결
-  glVertexAttribPointer(loc_a_position, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  glVertexAttribPointer(loc_a_position, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
   // 앞으로 언급하는 배열 버퍼(GL_ARRAY_BUFFER)는 color_buffer로 지정
   glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
   // 버텍스 쉐이더의 attribute 중 a_color 부분 활성화
   glEnableVertexAttribArray(loc_a_color);
   // 현재 배열 버퍼에 있는 데이터를 버텍스 쉐이더 a_color에 해당하는 attribute와 연결
-  glVertexAttribPointer(loc_a_color, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  glVertexAttribPointer(loc_a_color, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
-
-  glDrawArrays(GL_TRIANGLES, 0, g_num_position);
-
+  if (g_mesh_type == kTriangleSoup)
+  {
+    glDrawArrays(GL_TRIANGLES, 0, g_num_position);
+  }
+  else if (g_mesh_type == kVlistTriangles)
+  {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+    glDrawElements(GL_TRIANGLES, g_num_index, GL_UNSIGNED_INT, (void *)0);
+  }
 
   // 정점 attribute 배열 비활성화
   glDisableVertexAttribArray(loc_a_position);
@@ -301,10 +392,9 @@ void render_object()
   glUseProgram(0);
 }
 
-
 int main(void)
 {
-  GLFWwindow* window;
+  GLFWwindow *window;
 
   // Initialize GLFW library
   if (!glfwInit())
@@ -340,7 +430,7 @@ int main(void)
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glEnable (GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     set_transform();
     render_object();
