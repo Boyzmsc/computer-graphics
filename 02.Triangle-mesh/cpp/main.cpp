@@ -233,7 +233,7 @@ void update_buffer_objects()
       g_color_data = cube::triangle_soup::color;
 
       assert(g_position_size == g_color_size);
-      g_num_position = cube::triangle_soup::num_position;
+      g_num_position = cube::triangle_soup::num_position / 3;
       break;
 
     case kAvocado:
@@ -244,7 +244,7 @@ void update_buffer_objects()
       g_color_data = avocado::triangle_soup::color;
 
       assert(g_position_size == g_color_size);
-      g_num_position = avocado::triangle_soup::num_position;
+      g_num_position = avocado::triangle_soup::num_position / 3;
       break;
 
     case kDonut:
@@ -255,7 +255,7 @@ void update_buffer_objects()
       g_color_data = donut::triangle_soup::color;
 
       assert(g_position_size == g_color_size);
-      g_num_position = donut::triangle_soup::num_position;
+      g_num_position = donut::triangle_soup::num_position / 3;
       break;
 
     default:
