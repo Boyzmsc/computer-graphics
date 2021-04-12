@@ -26,27 +26,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// 쉐이더 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
-GLuint  program;          // 쉐이더 프로그램 객체의 레퍼런스 값
-GLint   loc_a_position;   // attribute 변수 a_position 위치
-GLint   loc_a_color;      // attribute 변수 a_color 위치
+GLuint program;       // 쉐이더 프로그램 객체의 레퍼런스 값
+GLint loc_a_position; // attribute 변수 a_position 위치
+GLint loc_a_color;    // attribute 변수 a_color 위치
 
-GLint   loc_u_PVM;        // uniform 변수 u_PVM 위치
+GLint loc_u_PVM; // uniform 변수 u_PVM 위치
 
-GLuint  position_buffer;  // GPU 메모리에서 position_buffer의 위치
-GLuint  color_buffer;     // GPU 메모리에서 color_buffer의 위치
-GLuint  index_buffer;     // GPU 메모리에서 index_buffer의 위치
+GLuint position_buffer; // GPU 메모리에서 position_buffer의 위치
+GLuint color_buffer;    // GPU 메모리에서 color_buffer의 위치
+GLuint index_buffer;    // GPU 메모리에서 index_buffer의 위치
 
-GLuint create_shader_from_file(const std::string& filename, GLuint shader_type);
+GLuint create_shader_from_file(const std::string &filename, GLuint shader_type);
 void init_shader_program();
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 /// 변환 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
-glm::mat4     mat_model, mat_view, mat_proj, mat_trans, mat_rot;
-glm::mat4     mat_PVM;
+glm::mat4 mat_model, mat_view, mat_proj, mat_trans, mat_rot;
+glm::mat4 mat_PVM;
 
-glm::vec3     vec_translate(0.0), vec_scale(0.5);
+glm::vec3 vec_translate(0.0), vec_scale(0.5);
 
 void set_transform();
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,15 +55,15 @@ void set_transform();
 /// 렌더링 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
 
-void init_buffer_objects();     // VBO init 함수: GPU의 VBO를 초기화하는 함수.
-void render_object();           // rendering 함수: 물체(삼각형)를 렌더링하는 함수.
+void init_buffer_objects(); // VBO init 함수: GPU의 VBO를 초기화하는 함수.
+void render_object();       // rendering 함수: 물체(삼각형)를 렌더링하는 함수.
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 /// IMGUI / keyboard input 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
-void init_imgui(GLFWwindow* window);
-void compose_imgui_frame(GLFWwindow* window, int key, int scancode, int action, int mods);
+void init_imgui(GLFWwindow *window);
+void compose_imgui_frame(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 void key_callback();
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,17 +71,18 @@ void key_callback();
 ////////////////////////////////////////////////////////////////////////////////
 /// ImGuIZMO 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
-glm::quat qRot = quat(1.f, 0.f, 0.f, 0.f); 
+glm::quat qRot = quat(1.f, 0.f, 0.f, 0.f);
 ////////////////////////////////////////////////////////////////////////////////
 
-void init_imgui(GLFWwindow* window) 
+void init_imgui(GLFWwindow *window)
 {
-  const char* glsl_version = "#version 120";
+  const char *glsl_version = "#version 120";
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  ImGuiIO &io = ImGui::GetIO();
+  (void)io;
   //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
@@ -105,7 +106,11 @@ void compose_imgui_frame()
     ImGui::Begin("control");
 
     // TODO
-    ImGui::SliderFloat("translate", &vec_translate[0], -3.0f, 3.0f);
+    ImGui::SliderFloat3("translate", &vec_translate[0], -3.0f, 3.0f);
+
+    ImGui::SliderFloat3("scale", &vec_scale[0], 0.01f, 1.0f);
+
+    ImGui::gizmo3D("rotation", qRot);
 
     ImGui::End();
   }
@@ -113,24 +118,24 @@ void compose_imgui_frame()
   // output window
   {
     ImGui::Begin("output");
-    
-    ImGui::TextColored(ImVec4(1,1,0,1), "current translate");
+
+    ImGui::TextColored(ImVec4(1, 1, 0, 1), "current translate");
     ImGui::Text("x = %.3f, y = %.3f, z = %.3f", vec_translate[0], vec_translate[1], vec_translate[2]);
     ImGui::NewLine();
 
-    ImGui::TextColored(ImVec4(1,1,0,1), "current rotation matrix");
+    ImGui::TextColored(ImVec4(1, 1, 0, 1), "current rotation matrix");
     ImGui::Text("%.3f %.3f %.3f %.3f ", mat_rot[0][0], mat_rot[1][0], mat_rot[2][0], mat_rot[3][0]);
     ImGui::Text("%.3f %.3f %.3f %.3f ", mat_rot[0][1], mat_rot[1][1], mat_rot[2][1], mat_rot[3][1]);
     ImGui::Text("%.3f %.3f %.3f %.3f ", mat_rot[0][2], mat_rot[1][2], mat_rot[2][2], mat_rot[3][2]);
     ImGui::Text("%.3f %.3f %.3f %.3f ", mat_rot[0][3], mat_rot[1][3], mat_rot[2][3], mat_rot[3][3]);
     ImGui::NewLine();
 
-    ImGui::TextColored(ImVec4(1,1,0,1),"current scaling");
+    ImGui::TextColored(ImVec4(1, 1, 0, 1), "current scaling");
     ImGui::Text("x = %.3f, y = %.3f, z = %.3f", vec_scale[0], vec_scale[1], vec_scale[2]);
     ImGui::NewLine();
     ImGui::NewLine();
 
-    ImGui::TextColored(ImVec4(1,1,0,1), "model matrix");
+    ImGui::TextColored(ImVec4(1, 1, 0, 1), "model matrix");
     ImGui::Text("%.3f %.3f %.3f %.3f ", mat_model[0][0], mat_model[1][0], mat_model[2][0], mat_model[3][0]);
     ImGui::Text("%.3f %.3f %.3f %.3f ", mat_model[0][1], mat_model[1][1], mat_model[2][1], mat_model[3][1]);
     ImGui::Text("%.3f %.3f %.3f %.3f ", mat_model[0][2], mat_model[1][2], mat_model[2][2], mat_model[3][2]);
@@ -140,27 +145,35 @@ void compose_imgui_frame()
   }
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
   // move left
-  if (key == GLFW_KEY_H && action == GLFW_PRESS) 
+  if (key == GLFW_KEY_H && action == GLFW_PRESS)
     vec_translate[0] -= 0.1f;
   // mode right
   if (key == GLFW_KEY_L && action == GLFW_PRESS)
     vec_translate[0] += 0.1f;
-  
-  // TODO
 
-  // scale
-  if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
-    vec_scale += 0.1f;
-  
   // TODO
+  // move down
+  if (key == GLFW_KEY_J && action == GLFW_PRESS)
+    vec_translate[1] -= 0.1f;
+  // mode up
+  if (key == GLFW_KEY_K && action == GLFW_PRESS)
+    vec_translate[1] += 0.1f;
+
+  // scale up
+  if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
+    vec_scale += 0.05f;
+
+  // TODO
+  // scale down
+  if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
+    vec_scale -= 0.05f;
 }
 
-
 // GLSL 파일을 읽어서 컴파일한 후 쉐이더 객체를 생성하는 함수
-GLuint create_shader_from_file(const std::string& filename, GLuint shader_type)
+GLuint create_shader_from_file(const std::string &filename, GLuint shader_type)
 {
   GLuint shader = 0;
 
@@ -170,20 +183,20 @@ GLuint create_shader_from_file(const std::string& filename, GLuint shader_type)
   std::string shader_string;
 
   shader_string.assign(
-    (std::istreambuf_iterator<char>(shader_file)),
-    std::istreambuf_iterator<char>());
+      (std::istreambuf_iterator<char>(shader_file)),
+      std::istreambuf_iterator<char>());
 
   // Get rid of BOM in the head of shader_string
   // Because, some GLSL compiler (e.g., Mesa Shader compiler) cannot handle UTF-8 with BOM
-  if (shader_string.compare(0, 3, "\xEF\xBB\xBF") == 0)  // Is the file marked as UTF-8?
+  if (shader_string.compare(0, 3, "\xEF\xBB\xBF") == 0) // Is the file marked as UTF-8?
   {
     std::cout << "Shader code (" << filename << ") is written in UTF-8 with BOM" << std::endl;
     std::cout << "  When we pass the shader code to GLSL compiler, we temporarily get rid of BOM" << std::endl;
-    shader_string.erase(0, 3);                  // Now get rid of the BOM.
+    shader_string.erase(0, 3); // Now get rid of the BOM.
   }
 
-  const GLchar* shader_src = shader_string.c_str();
-  glShaderSource(shader, 1, (const GLchar * *)& shader_src, NULL);
+  const GLchar *shader_src = shader_string.c_str();
+  glShaderSource(shader, 1, (const GLchar **)&shader_src, NULL);
   glCompileShader(shader);
 
   GLint is_compiled;
@@ -210,14 +223,12 @@ GLuint create_shader_from_file(const std::string& filename, GLuint shader_type)
 // vertex shader와 fragment shader를 링크시켜 program을 생성하는 함수
 void init_shader_program()
 {
-  GLuint vertex_shader
-    = create_shader_from_file("./shader/vertex.glsl", GL_VERTEX_SHADER);
+  GLuint vertex_shader = create_shader_from_file("./shader/vertex.glsl", GL_VERTEX_SHADER);
 
   std::cout << "vertex_shader id: " << vertex_shader << std::endl;
   assert(vertex_shader != 0);
 
-  GLuint fragment_shader
-    = create_shader_from_file("./shader/fragment.glsl", GL_FRAGMENT_SHADER);
+  GLuint fragment_shader = create_shader_from_file("./shader/fragment.glsl", GL_FRAGMENT_SHADER);
 
   std::cout << "fragment_shader id: " << fragment_shader << std::endl;
   assert(fragment_shader != 0);
@@ -265,23 +276,25 @@ void init_buffer_objects()
   glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(avocado::vlist::color), avocado::vlist::color, GL_STATIC_DRAW);
 
-  // IBO 
+  // IBO
   glGenBuffers(1, &index_buffer);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(avocado::vlist::index), avocado::vlist::index, GL_STATIC_DRAW);
 }
 
-void set_transform() 
+void set_transform()
 {
   mat_view = glm::mat4(1.0f);
-  mat_proj = glm::mat4(1.0f); 
+  mat_proj = glm::mat4(1.0f);
   mat_model = glm::mat4(1.0f);
 
   // TODO
   mat_model = mat_model * glm::scale(glm::mat4(1.0f), vec_scale);
   mat_model = mat_model * glm::translate(vec_translate);
-}
 
+  mat_rot = glm::mat4_cast(qRot);
+  mat_model = mat_model * mat_rot;
+}
 
 void render_object()
 {
@@ -296,18 +309,18 @@ void render_object()
   // 버텍스 쉐이더의 attribute 중 a_position 부분 활성화
   glEnableVertexAttribArray(loc_a_position);
   // 현재 배열 버퍼에 있는 데이터를 버텍스 쉐이더 a_position에 해당하는 attribute와 연결
-  glVertexAttribPointer(loc_a_position, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  glVertexAttribPointer(loc_a_position, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
   // 앞으로 언급하는 배열 버퍼(GL_ARRAY_BUFFER)는 color_buffer로 지정
   glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
   // 버텍스 쉐이더의 attribute 중 a_color 부분 활성화
   glEnableVertexAttribArray(loc_a_color);
   // 현재 배열 버퍼에 있는 데이터를 버텍스 쉐이더 a_color에 해당하는 attribute와 연결
-  glVertexAttribPointer(loc_a_color, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  glVertexAttribPointer(loc_a_color, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
   // IBO를 이용해 물체 그리기
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-  glDrawElements(GL_TRIANGLES, avocado::vlist::num_index, GL_UNSIGNED_INT, (void*)0);
+  glDrawElements(GL_TRIANGLES, avocado::vlist::num_index, GL_UNSIGNED_INT, (void *)0);
 
   // 정점 attribute 배열 비활성화
   glDisableVertexAttribArray(loc_a_position);
@@ -317,10 +330,9 @@ void render_object()
   glUseProgram(0);
 }
 
-
 int main(void)
 {
-  GLFWwindow* window;
+  GLFWwindow *window;
 
   // Initialize GLFW library
   if (!glfwInit())
@@ -351,14 +363,13 @@ int main(void)
 
   glfwSetKeyCallback(window, key_callback);
 
-
   // Loop until the user closes the window
   while (!glfwWindowShouldClose(window))
   {
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glEnable (GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     glfwPollEvents();
     compose_imgui_frame();
