@@ -289,11 +289,12 @@ void set_transform()
   mat_model = glm::mat4(1.0f);
 
   // TODO
-  mat_model = mat_model * glm::scale(glm::mat4(1.0f), vec_scale);
-  mat_model = mat_model * glm::translate(vec_translate);
-
   mat_rot = glm::mat4_cast(qRot);
+
+  // TRS
+  mat_model = mat_model * glm::translate(vec_translate);
   mat_model = mat_model * mat_rot;
+  mat_model = mat_model * glm::scale(glm::mat4(1.0f), vec_scale);
 }
 
 void render_object()
