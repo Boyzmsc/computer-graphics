@@ -356,7 +356,7 @@ void set_transform()
   if (g_is_perspective)
   {
     g_camera.set_mode(g_camera.kPerspective);
-    mat_proj = glm::perspective(glm::radians(g_camera.fovy()), 1.0f, 0.01f, 100.0f);
+    mat_proj = glm::perspective(glm::radians(g_camera.fovy()), 1.0f, 0.001f, 100.0f);
   }
   else
   {
