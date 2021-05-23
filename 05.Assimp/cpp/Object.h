@@ -12,12 +12,6 @@
 #include <GL/glew.h>
 #include <iostream>
 
-struct Face
-{
-    GLuint index_buffer = 0;
-    GLuint num_indices = 0;
-};
-
 class Object
 {
 public:
@@ -51,7 +45,6 @@ private:
     GLuint index_buffer;
     bool is_color = false;
 
-    std::vector<Face> faces;
     const aiMesh *mMesh;
 
     glm::vec3 vec_translate;
