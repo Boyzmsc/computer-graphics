@@ -8,6 +8,7 @@ CC = g++
 CFLAGS = -std=c++11
 LDFLAGS = -lGL -lGLEW -lglfw -lassimp
 EXECUTABLE = helloassimp
+OUTPUT = output.txt
 RM = rm -rf
 
 all: $(SOURCES) $(HEADERS)
@@ -15,4 +16,5 @@ all: $(SOURCES) $(HEADERS)
 
 clean:
 	$(RM) *.o $(EXECUTABLE)
+	$(RM) *.o $(OUTPUT)
 
