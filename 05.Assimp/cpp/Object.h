@@ -42,7 +42,7 @@ public:
 private:
     GLuint position_buffer; // GPU 메모리에서 vertices_buffer 위치
     GLuint color_buffer;    // GPU 메모리에서 color_buffer 위치
-    GLuint index_buffer;
+    GLuint index_buffer;    // GPU 메모리에서 index_buffer 위치
     bool is_color = false;
 
     const aiMesh *mMesh;

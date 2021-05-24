@@ -42,25 +42,17 @@ glm::mat4 Object::get_model_matrix()
 void Object::draw(int loc_a_position, int loc_a_color)
 {
     // TODO
-    // 앞으로 언급하는 배열 버퍼(GL_ARRAY_BUFFER)는 position_buffer로 지정
     glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
-    // 버텍스 쉐이더의 attribute 중 a_position 부분 활성화
     glEnableVertexAttribArray(loc_a_position);
-    // 현재 배열 버퍼에 있는 데이터를 버텍스 쉐이더 a_position에 해당하는 attribute와 연결
     glVertexAttribPointer(loc_a_position, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
-    // 앞으로 언급하는 배열 버퍼(GL_ARRAY_BUFFER)는 color_buffer로 지정
     glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
-    // 버텍스 쉐이더의 attribute 중 a_color 부분 활성화
     glEnableVertexAttribArray(loc_a_color);
-    // 현재 배열 버퍼에 있는 데이터를 버텍스 쉐이더 a_color에 해당하는 attribute와 연결
     glVertexAttribPointer(loc_a_color, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
 
-    // IBO를 이용해 물체 그리기
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
     glDrawElements(GL_TRIANGLES, mMesh->mNumFaces * mMesh->mFaces->mNumIndices, GL_UNSIGNED_INT, (void *)0);
 
-    // 정점 attribute 배열 비활성화
     glDisableVertexAttribArray(loc_a_position);
     glDisableVertexAttribArray(loc_a_color);
 }
