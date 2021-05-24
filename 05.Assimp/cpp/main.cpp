@@ -321,8 +321,13 @@ void compose_imgui_frame()
   {
     ImGui::Begin("camera control");
 
-    ImGui::RadioButton("camera 0", &cam_select_idx, 0);
-    ImGui::RadioButton("camera 1", &cam_select_idx, 1);
+    for (int i = 0; i < cameras.size(); i++)
+    {
+      char camera_name[10];
+      sprintf(camera_name, "%s %d", "camera", i);
+      ImGui::RadioButton(camera_name, &cam_select_idx, i);
+    }
+
     ImGui::Checkbox("perspective", &g_is_perspective);
 
     ImGui::Text("view direction");
@@ -487,6 +492,53 @@ void render(GLFWwindow *window)
   glfwPollEvents();
 }
 
+// info.txt 형식에 맞게 결과 출력 메서드 구현
+void output_info()
+{
+  std::ofstream fout;
+  fout.open("output.txt");
+
+  fout << objects.size() << "\n"; // 물체 갯수
+
+  for (int i = 0; i < objects.size(); i++)
+  {
+    fout << object_names[i].c_str() << "\n"; // 물체의 파일명
+
+    glm::vec3 translate = objects[i].translate();
+    glm::vec3 scale = objects[i].scale();
+    glm::mat4 rotate = objects[i].rotate();
+
+    // current scale
+    fout << scale[0] << " " << scale[1] << " " << scale[2] << "\n";
+    // current translate
+    fout << translate[0] << " " << translate[1] << " " << translate[2] << "\n";
+
+    // current rotate
+    // fout << rotate[0][0] << rotate[1][0] << rotate[2][0] << rotate[3][0] << "\n";
+    // fout << rotate[0][1] << rotate[1][1] << rotate[2][1] << rotate[3][1] << "\n";
+    // fout << rotate[0][2] << rotate[1][2] << rotate[2][2] << rotate[3][2] << "\n";
+    // fout << rotate[0][3] << rotate[1][3] << rotate[2][3] << rotate[3][3] << "\n";
+  }
+
+  fout << cameras.size() << "\n"; // 카메라 갯수
+
+  for (int i = 0; i < cameras.size(); i++)
+  {
+    glm::vec3 position = cameras[i].position();
+    glm::vec3 front_dir = cameras[i].front_direction();
+    glm::vec3 up_dir = cameras[i].up_direction();
+
+    // current position
+    fout << position[0] << " " << position[1] << " " << position[2] << "\n";
+    // current front_direction
+    fout << front_dir[0] << " " << front_dir[1] << " " << front_dir[2] << "\n";
+    // current up_direction
+    fout << up_dir[0] << " " << up_dir[1] << " " << up_dir[2] << "\n";
+  }
+
+  fout.close();
+}
+
 int main(int argc, char *argv[])
 {
   // create window
@@ -505,6 +557,8 @@ int main(int argc, char *argv[])
   {
     render(window);
   }
+
+  output_info(); // 마지막에 나타나는 씬 정보 출력
 
   glfwTerminate();
 
