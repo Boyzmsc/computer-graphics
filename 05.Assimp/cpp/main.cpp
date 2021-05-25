@@ -97,6 +97,12 @@ void scroll_callback(GLFWwindow *window, double x, double y);
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
+/// 결과 출력 함수
+////////////////////////////////////////////////////////////////////////////////
+void output_info();
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
 /// ImGuIZMO 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
 glm::quat qRot = quat(1.f, 0.f, 0.f, 0.f);
@@ -176,6 +182,10 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     cameras[cam_select_idx].move_forward(0.1f);
   if (key == GLFW_KEY_S && action == GLFW_PRESS)
     cameras[cam_select_idx].move_backward(0.1f);
+
+  // output current info
+  if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    output_info();
 }
 
 void init_window(GLFWwindow *window)
@@ -304,10 +314,14 @@ void compose_imgui_frame()
     glm::vec3 scale = objects[obj_select_idx].scale();
 
     if (ImGui::SliderFloat3("tranlsate", glm::value_ptr(translate), -10.0f, 10.0f))
+    {
       objects[obj_select_idx].set_translate(translate);
+    }
 
     if (ImGui::SliderFloat3("scale", glm::value_ptr(scale), 0.0f, 1.5f))
+    {
       objects[obj_select_idx].set_scale(scale);
+    }
 
     if (ImGui::gizmo3D("rotation", qRot))
     {
@@ -335,6 +349,18 @@ void compose_imgui_frame()
     if (ImGui::gizmo3D("##gizmo2", dir, 100))
     {
       cameras[cam_select_idx].update_front_direction(dir);
+    }
+
+    ImGui::End();
+  }
+
+  // control window
+  {
+    ImGui::Begin("save info");
+
+    if (ImGui::Button("save", ImVec2(-1.0f, -1.0f)))
+    {
+      output_info();
     }
 
     ImGui::End();
@@ -492,7 +518,7 @@ void render(GLFWwindow *window)
   glfwPollEvents();
 }
 
-// info.txt 형식에 맞게 결과 출력 메서드 구현
+// info.txt와 동일한 형식의 결과 정보 내보내기
 void output_info()
 {
   std::ofstream fout;
@@ -506,18 +532,12 @@ void output_info()
 
     glm::vec3 translate = objects[i].translate();
     glm::vec3 scale = objects[i].scale();
-    glm::mat4 rotate = objects[i].rotate();
+    // glm::mat4 rotate = objects[i].rotate();
 
     // current scale
     fout << scale[0] << " " << scale[1] << " " << scale[2] << "\n";
     // current translate
     fout << translate[0] << " " << translate[1] << " " << translate[2] << "\n";
-
-    // current rotate
-    // fout << rotate[0][0] << rotate[1][0] << rotate[2][0] << rotate[3][0] << "\n";
-    // fout << rotate[0][1] << rotate[1][1] << rotate[2][1] << rotate[3][1] << "\n";
-    // fout << rotate[0][2] << rotate[1][2] << rotate[2][2] << rotate[3][2] << "\n";
-    // fout << rotate[0][3] << rotate[1][3] << rotate[2][3] << rotate[3][3] << "\n";
   }
 
   fout << cameras.size() << "\n"; // 카메라 갯수
@@ -557,8 +577,6 @@ int main(int argc, char *argv[])
   {
     render(window);
   }
-
-  output_info(); // 마지막에 나타나는 씬 정보 출력
 
   glfwTerminate();
 
