@@ -212,7 +212,8 @@ bool init_scene_from_file(const std::string &filename)
   for (int i = 0; i < count; i++)
   {
     std::string name;
-    float scale, x, y, z;
+    float s_x, s_y, s_z;
+    float t_x, t_y, t_z;
 
     fin >> name;
     if (!load_asset(name))
@@ -221,10 +222,12 @@ bool init_scene_from_file(const std::string &filename)
       return -1;
     }
 
-    fin >> scale >> x >> y >> z;
+    // scale 값도 단일 값이 아닌 3개의 인자로 들어오기 때문에 수정
+    fin >> s_x >> s_y >> s_z;
+    fin >> t_x >> t_y >> t_z;
 
-    objects[i].set_scale(glm::vec3(scale));
-    objects[i].set_translate(glm::vec3(x, y, z));
+    objects[i].set_scale(glm::vec3(s_x, s_y, s_z));
+    objects[i].set_translate(glm::vec3(t_x, t_y, t_z));
   }
 
   // init cameras
