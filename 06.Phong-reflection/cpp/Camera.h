@@ -30,6 +30,8 @@ public:
   void move_right(float delta);
   void move_up(float delta);
   void move_down(float delta);
+  void rotate_x(float picth);
+  void rotate_y(float yaw);
 	
   const glm::vec3  position() const          { return  position_; }
   const glm::vec3  front_direction() const   { return  front_dir_; } 
