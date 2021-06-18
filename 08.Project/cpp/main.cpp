@@ -43,7 +43,6 @@ bool init_scene_from_file(const std::string &filename);
 // /// shading 관련 변수
 // ////////////////////////////////////////////////////////////////////////////////
 glm::vec3 g_clear_color(0.5f, 0.5f, 0.5f);
-
 glm::mat3 mat_normal;
 // ////////////////////////////////////////////////////////////////////////////////
 
@@ -121,6 +120,13 @@ void scroll_callback(GLFWwindow *window, double x, double y);
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
+/// 결과 출력 함수
+////////////////////////////////////////////////////////////////////////////////
+void store_info(const std::string &filename);
+bool load_info(const std::string &filename);
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
 /// ImGuIZMO 관련 변수 및 함수
 ////////////////////////////////////////////////////////////////////////////////
 glm::quat qRot = quat(1.f, 0.f, 0.f, 0.f);
@@ -171,35 +177,35 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
   // move left
   if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    translate[0] -= 0.1f;
+    translate[0] -= 0.05f;
   // mode right
   if (key == GLFW_KEY_L && action == GLFW_PRESS)
-    translate[0] += 0.1f;
+    translate[0] += 0.05f;
   // move up
   if (key == GLFW_KEY_K && action == GLFW_PRESS)
-    translate[1] += 0.1f;
+    translate[1] += 0.05f;
   // move down
   if (key == GLFW_KEY_J && action == GLFW_PRESS)
-    translate[1] -= 0.1f;
+    translate[1] -= 0.05f;
 
   // scale
   if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
-    scale += 0.1f;
+    scale += 0.025f;
   if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
-    scale -= 0.1f;
+    scale -= 0.025f;
 
   models[obj_select_idx].set_translate(translate);
   models[obj_select_idx].set_scale(scale);
 
   // camera extrinsic parameter
   if (key == GLFW_KEY_A && action == GLFW_PRESS)
-    cameras[cam_select_idx].move_left(0.1f);
+    cameras[cam_select_idx].move_left(0.05f);
   if (key == GLFW_KEY_D && action == GLFW_PRESS)
-    cameras[cam_select_idx].move_right(0.1f);
+    cameras[cam_select_idx].move_right(0.05f);
   if (key == GLFW_KEY_W && action == GLFW_PRESS)
-    cameras[cam_select_idx].move_forward(0.1f);
+    cameras[cam_select_idx].move_forward(0.05f);
   if (key == GLFW_KEY_S && action == GLFW_PRESS)
-    cameras[cam_select_idx].move_backward(0.1f);
+    cameras[cam_select_idx].move_backward(0.05f);
 }
 
 void init_window(GLFWwindow *window)
@@ -221,6 +227,7 @@ bool init_scene_from_file(const std::string &filename)
   if (fin.fail())
     return false;
 
+  // Init Models
   int count;
   fin >> count;
   for (int i = 0; i < count; i++)
@@ -228,6 +235,10 @@ bool init_scene_from_file(const std::string &filename)
     std::string name;
     float s_x, s_y, s_z;
     float t_x, t_y, t_z;
+    float r_00, r_10, r_20, r_30;
+    float r_01, r_11, r_21, r_31;
+    float r_02, r_12, r_22, r_32;
+    float r_03, r_13, r_23, r_33;
 
     fin >> name;
     if (!load_asset(name))
@@ -236,16 +247,23 @@ bool init_scene_from_file(const std::string &filename)
       return -1;
     }
 
-    // scale 값도 단일 값이 아닌 3개의 인자로 들어오기 때문에 수정
     fin >> s_x >> s_y >> s_z;
     fin >> t_x >> t_y >> t_z;
 
+    fin >> r_00 >> r_10 >> r_20 >> r_30;
+    fin >> r_01 >> r_11 >> r_21 >> r_31;
+    fin >> r_02 >> r_12 >> r_22 >> r_32;
+    fin >> r_03 >> r_13 >> r_23 >> r_33;
+
     models[i].set_scale(glm::vec3(s_x, s_y, s_z));
     models[i].set_translate(glm::vec3(t_x, t_y, t_z));
-    models[i].set_rotate(glm::mat4(1.0f));
+    models[i].set_rotate(glm::mat4(r_00, r_01, r_02, r_03,
+                                   r_10, r_11, r_12, r_13,
+                                   r_20, r_21, r_22, r_23,
+                                   r_30, r_31, r_32, r_33));
   }
 
-  // init cameras
+  // Init Cameras
   fin >> count;
 
   for (int i = 0; i < count; i++)
@@ -267,6 +285,9 @@ bool init_scene_from_file(const std::string &filename)
         0.0f);
     cameras.push_back(camera);
   }
+
+  // Init Light Position
+  light.pos = glm::vec3(0.180127, 0.498695, 0.847856);
 
   return true;
 }
@@ -313,23 +334,27 @@ void compose_imgui_frame()
 
   // control window
   {
-    ImGui::Begin("model control");
+    ImGui::Begin("Model Control");
 
     for (int i = 0; i < models.size(); i++)
     {
-      ImGui::RadioButton(model_names[i].c_str(), &obj_select_idx, i);
+      std::string tmp = model_names[i].c_str();
+      size_t start = tmp.find("/");
+      size_t end = tmp.find(".");
+      std::string name = tmp.substr(start + 1, end - start - 1);
+      ImGui::RadioButton(name.c_str(), &obj_select_idx, i);
     }
 
     glm::vec3 translate = models[obj_select_idx].translate();
     glm::vec3 scale = models[obj_select_idx].scale();
 
-    if (ImGui::SliderFloat3("tranlsate", glm::value_ptr(translate), -10.0f, 10.0f))
+    if (ImGui::SliderFloat3("Tranlsate", glm::value_ptr(translate), -10.0f, 10.0f))
       models[obj_select_idx].set_translate(translate);
 
-    if (ImGui::SliderFloat3("scale", glm::value_ptr(scale), 0.0f, 1.5f))
+    if (ImGui::SliderFloat3("Scale", glm::value_ptr(scale), 0.0f, 1.5f))
       models[obj_select_idx].set_scale(scale);
 
-    if (ImGui::gizmo3D("rotation", qRot))
+    if (ImGui::gizmo3D("Rotation", qRot))
     {
       models[obj_select_idx].set_rotate(glm::mat4_cast(qRot));
     }
@@ -338,13 +363,17 @@ void compose_imgui_frame()
   }
 
   {
-    ImGui::Begin("camera control");
+    ImGui::Begin("Camera Control");
 
-    ImGui::RadioButton("camera 0", &cam_select_idx, 0);
-    ImGui::RadioButton("camera 1", &cam_select_idx, 1);
-    ImGui::Checkbox("perspective", &g_is_perspective);
+    for (int i = 0; i < cameras.size(); i++)
+    {
+      char camera_name[10];
+      sprintf(camera_name, "%s %d", "Camera", i);
+      ImGui::RadioButton(camera_name, &cam_select_idx, i);
+    }
+    ImGui::Checkbox("Perspective", &g_is_perspective);
 
-    ImGui::Text("view direction");
+    ImGui::Text("View Direction");
     vec3 dir = vec3(cameras[cam_select_idx].front_direction());
     if (ImGui::gizmo3D("##gizmo2", dir, 100))
     {
@@ -355,41 +384,59 @@ void compose_imgui_frame()
   }
 
   {
-    ImGui::Begin("light");
+    ImGui::Begin("Light");
 
-    ImGui::ColorEdit3("background color", glm::value_ptr(g_clear_color));
+    ImGui::ColorEdit3("Background Color", glm::value_ptr(g_clear_color));
 
     glm::vec3 vec(-light.pos);
-    ImGui::gizmo3D("Light direction", vec);
+    ImGui::gizmo3D("Light Direction", vec);
     light.pos = -vec;
 
-    ImGui::ColorEdit3("ambient light", glm::value_ptr(light.ambient));
-    ImGui::ColorEdit3("diffuse light", glm::value_ptr(light.diffuse));
-    ImGui::ColorEdit3("specular light", glm::value_ptr(light.specular));
+    ImGui::ColorEdit3("Ambient Light", glm::value_ptr(light.ambient));
+    ImGui::ColorEdit3("Diffuse Light", glm::value_ptr(light.diffuse));
+    ImGui::ColorEdit3("Specular Light", glm::value_ptr(light.specular));
 
     ImGui::End();
   }
-  // {
-  //   ImGui::Begin("materials");
+  {
+    ImGui::Begin("Materials");
 
-  //   std::vector<Mesh> &mMeshes = models[obj_select_idx].meshes();
+    std::vector<Mesh> &mMeshes = models[obj_select_idx].meshes();
 
-  //   std::string label;
-  //   for (int i = 0; i < mMeshes.size(); ++i)
-  //   {
-  //     label = mMeshes[i].mMaterial.name + "-ambient";
-  //     ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.ambient));
-  //     label = mMeshes[i].mMaterial.name + "-diffuse";
-  //     ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.diffuse));
-  //     label = mMeshes[i].mMaterial.name + "-specular";
-  //     ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.specular));
-  //     label = mMeshes[i].mMaterial.name + "-shininess";
-  //     ImGui::SliderFloat(label.c_str(), &mMeshes[i].mMaterial.shininess, 0.0f, 500.0f);
-  //     ImGui::NewLine();
-  //   }
+    std::string label;
+    for (int i = 0; i < mMeshes.size(); ++i)
+    {
+      label = mMeshes[i].mMaterial.name + "_Ambient";
+      ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.ambient));
+      // label = mMeshes[i].mMaterial.name + "_Diffuse";
+      // ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.diffuse));
+      label = mMeshes[i].mMaterial.name + "_Specular";
+      ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.specular));
+      label = mMeshes[i].mMaterial.name + "_Shininess";
+      ImGui::SliderFloat(label.c_str(), &mMeshes[i].mMaterial.shininess, 5.0f, 500.0f);
+      ImGui::NewLine();
+    }
 
-  //   ImGui::End();
-  // }
+    ImGui::End();
+  }
+
+  {
+    ImGui::Begin("Load/Store Control");
+
+    if (ImGui::Button("Save", ImVec2(120.0f, 25.0f)))
+    {
+      store_info("output.txt");
+    }
+    if (ImGui::Button("Load", ImVec2(120.0f, 25.0f)))
+    {
+      if (!load_info("output.txt"))
+      {
+        std::cout << "Failed to load a info file" << std::endl;
+      }
+    }
+
+    ImGui::End();
+  }
 }
 
 // GLSL 파일을 읽어서 컴파일한 후 쉐이더 객체를 생성하는 함수
@@ -485,6 +532,24 @@ void init_shader_program()
 
   loc_u_diffuse_texture = glGetUniformLocation(program, "u_diffuse_texture");
   loc_a_texcoord = glGetAttribLocation(program, "a_texcoord");
+
+  loc_a_normal = glGetAttribLocation(program, "a_normal");
+
+  loc_u_model_matrix = glGetUniformLocation(program, "u_model_matrix");
+  loc_u_normal_matrix = glGetUniformLocation(program, "u_normal_matrix");
+
+  loc_u_camera_position = glGetUniformLocation(program, "u_camera_position");
+  loc_u_view_matrix = glGetUniformLocation(program, "u_view_matrix");
+
+  loc_u_light_position = glGetUniformLocation(program, "u_light_position");
+  loc_u_light_ambient = glGetUniformLocation(program, "u_light_ambient");
+  loc_u_light_diffuse = glGetUniformLocation(program, "u_light_diffuse");
+  loc_u_light_specular = glGetUniformLocation(program, "u_light_specular");
+
+  loc_u_obj_ambient = glGetUniformLocation(program, "u_obj_ambient");
+  loc_u_obj_diffuse = glGetUniformLocation(program, "u_obj_diffuse");
+  loc_u_obj_specular = glGetUniformLocation(program, "u_obj_specular");
+  loc_u_obj_shininess = glGetUniformLocation(program, "u_obj_shininess");
 }
 
 void render_object()
@@ -493,21 +558,34 @@ void render_object()
   mat_view = cameras[cam_select_idx].get_view_matrix();
 
   if (g_is_perspective)
-    mat_proj = glm::perspective(glm::radians(cameras[cam_select_idx].fovy()), g_aspect, 0.1f, 1000.0f);
+    mat_proj = glm::perspective(glm::radians(cameras[cam_select_idx].fovy()), g_aspect, 0.1f, 10000.0f);
   else
-    mat_proj = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+    mat_proj = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -10.0f, 10.0f);
 
   // 특정 쉐이더 프로그램 사용
   glUseProgram(program);
 
+  // TODO : send data to GPU
+  glUniformMatrix4fv(loc_u_view_matrix, 1, false, glm::value_ptr(mat_view));
+  glUniform3fv(loc_u_camera_position, 1, glm::value_ptr(cameras[cam_select_idx].position()));
+
+  glUniform3fv(loc_u_light_position, 1, glm::value_ptr(light.pos));
+  glUniform3fv(loc_u_light_ambient, 1, glm::value_ptr(light.ambient));
+  glUniform3fv(loc_u_light_diffuse, 1, glm::value_ptr(light.diffuse));
+  glUniform3fv(loc_u_light_specular, 1, glm::value_ptr(light.specular));
+
   for (int i = 0; i < models.size(); ++i)
   {
     mat_model = models[i].get_model_matrix();
+    glUniformMatrix4fv(loc_u_model_matrix, 1, GL_FALSE, glm::value_ptr(mat_model));
+
+    mat_normal = mat3(transpose(inverse(mat_model)));
+    glUniformMatrix3fv(loc_u_normal_matrix, 1, GL_FALSE, glm::value_ptr(mat_normal));
 
     mat_PVM = mat_proj * mat_view * mat_model;
     glUniformMatrix4fv(loc_u_PVM, 1, GL_FALSE, glm::value_ptr(mat_PVM));
 
-    models[i].draw(loc_a_position, loc_u_diffuse_texture, loc_a_texcoord);
+    models[i].draw(loc_a_position, loc_a_normal, loc_u_obj_ambient, loc_u_obj_diffuse, loc_u_obj_specular, loc_u_obj_shininess, loc_u_diffuse_texture, loc_a_texcoord);
   }
 
   // 쉐이더 프로그램 사용해제
@@ -534,10 +612,151 @@ void render(GLFWwindow *window)
   glfwPollEvents();
 }
 
+// Store Func
+void store_info(const std::string &filename)
+{
+  std::ofstream fout;
+  fout.open(filename);
+
+  // Model
+  fout << models.size() << "\n";
+
+  for (int i = 0; i < models.size(); i++)
+  {
+    fout << model_names[i].c_str() << "\n";
+
+    glm::vec3 translate = models[i].translate();
+    glm::vec3 scale = models[i].scale();
+    glm::mat4 rotate = models[i].rotate();
+
+    // current scale
+    fout << scale[0] << " " << scale[1] << " " << scale[2] << "\n";
+    // current translate
+    fout << translate[0] << " " << translate[1] << " " << translate[2] << "\n";
+    // current rotate
+    fout << rotate[0][0] << " " << rotate[1][0] << " " << rotate[2][0] << " " << rotate[3][0] << "\n";
+    fout << rotate[0][1] << " " << rotate[1][1] << " " << rotate[2][1] << " " << rotate[3][1] << "\n";
+    fout << rotate[0][2] << " " << rotate[1][2] << " " << rotate[2][2] << " " << rotate[3][2] << "\n";
+    fout << rotate[0][3] << " " << rotate[1][3] << " " << rotate[2][3] << " " << rotate[3][3] << "\n";
+  }
+
+  // Camera
+  fout << cameras.size() << "\n";
+
+  for (int i = 0; i < cameras.size(); i++)
+  {
+    glm::vec3 position = cameras[i].position();
+    glm::vec3 front_dir = cameras[i].front_direction();
+    glm::vec3 up_dir = cameras[i].up_direction();
+
+    // current position
+    fout << position[0] << " " << position[1] << " " << position[2] << "\n";
+    // current front_direction
+    fout << front_dir[0] << " " << front_dir[1] << " " << front_dir[2] << "\n";
+    // current up_direction
+    fout << up_dir[0] << " " << up_dir[1] << " " << up_dir[2] << "\n";
+  }
+
+  // Background Color
+  fout << g_clear_color[0] << " " << g_clear_color[1] << " " << g_clear_color[2] << "\n";
+
+  // Light Position
+  fout << light.pos[0] << " " << light.pos[1] << " " << light.pos[2] << "\n";
+
+  // Light Color
+  fout << light.ambient[0] << " " << light.ambient[1] << " " << light.ambient[2] << "\n";
+  fout << light.diffuse[0] << " " << light.diffuse[1] << " " << light.diffuse[2] << "\n";
+  fout << light.specular[0] << " " << light.specular[1] << " " << light.specular[2] << "\n";
+  fout.close();
+}
+
+// Load Func
+bool load_info(const std::string &filename)
+{
+  std::ifstream fin(filename);
+  if (fin.fail())
+    return false;
+
+  // Model
+  int count;
+  fin >> count;
+  for (int i = 0; i < count; i++)
+  {
+    std::string name;
+    float s_x, s_y, s_z;
+    float t_x, t_y, t_z;
+    float r_00, r_10, r_20, r_30;
+    float r_01, r_11, r_21, r_31;
+    float r_02, r_12, r_22, r_32;
+    float r_03, r_13, r_23, r_33;
+
+    fin >> name;
+    fin >> s_x >> s_y >> s_z;
+    fin >> t_x >> t_y >> t_z;
+
+    fin >> r_00 >> r_10 >> r_20 >> r_30;
+    fin >> r_01 >> r_11 >> r_21 >> r_31;
+    fin >> r_02 >> r_12 >> r_22 >> r_32;
+    fin >> r_03 >> r_13 >> r_23 >> r_33;
+
+    models[i].set_scale(glm::vec3(s_x, s_y, s_z));
+    models[i].set_translate(glm::vec3(t_x, t_y, t_z));
+    models[i].set_rotate(glm::mat4(r_00, r_01, r_02, r_03,
+                                   r_10, r_11, r_12, r_13,
+                                   r_20, r_21, r_22, r_23,
+                                   r_30, r_31, r_32, r_33));
+  }
+
+  // Camera
+  fin >> count;
+
+  for (int i = 0; i < count; i++)
+  {
+    float pos_x, pos_y, pos_z;
+    float front_x, front_y, front_z;
+    float up_x, up_y, up_z;
+
+    fin >> pos_x >> pos_y >> pos_z >>
+        front_x >> front_y >> front_z >>
+        up_x >> up_y >> up_z;
+
+    Camera camera(
+        glm::vec3(pos_x, pos_y, pos_z),
+        glm::vec3(front_x, front_y, front_z),
+        glm::vec3(up_x, up_y, up_z),
+        45.0f,
+        0.0f,
+        0.0f);
+
+    cameras[i] = camera;
+  }
+
+  // Light
+  float bg_r, bg_g, bg_b;
+  float lp_x, lp_y, lp_z;
+  float ambient_r, ambient_g, ambient_b;
+  float diffuse_r, diffuse_g, diffuse_b;
+  float specular_r, specular_g, specular_b;
+
+  fin >> bg_r >> bg_g >> bg_b;
+  fin >> lp_x >> lp_y >> lp_z;
+  fin >> ambient_r >> ambient_g >> ambient_b;
+  fin >> diffuse_r >> diffuse_g >> diffuse_b;
+  fin >> specular_r >> specular_g >> specular_b;
+
+  g_clear_color = glm::vec3(bg_r, bg_g, bg_b);
+  light.pos = glm::vec3(lp_x, lp_y, lp_z);
+  light.ambient = glm::vec3(ambient_r, ambient_g, ambient_b);
+  light.diffuse = glm::vec3(diffuse_r, diffuse_g, diffuse_b);
+  light.specular = glm::vec3(specular_r, specular_g, specular_b);
+
+  return true;
+}
+
 int main(int argc, char *argv[])
 {
   // create window
-  GLFWwindow *window = createWindow(1000, 1000, "Hello Assimp");
+  GLFWwindow *window = createWindow(1500, 1500, "Project");
 
   // initialize window
   init_window(window);

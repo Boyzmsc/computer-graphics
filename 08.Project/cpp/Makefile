@@ -7,7 +7,7 @@ SOURCES += $(IMGUI_DIR)imGuIZMO/imGuIZMOquat.cpp
 CC = g++
 CFLAGS = -std=c++11
 LDFLAGS = -lGL -lGLEW -lglfw -lassimp
-EXECUTABLE = texture
+EXECUTABLE = project
 RM = rm -rf
 
 all: $(SOURCES) $(HEADERS)
