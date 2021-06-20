@@ -197,15 +197,38 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
   models[obj_select_idx].set_translate(translate);
   models[obj_select_idx].set_scale(scale);
 
-  // camera extrinsic parameter
+  // Camera Extrinsic Parameter
+  // Camera Translate
   if (key == GLFW_KEY_A && action == GLFW_PRESS)
     cameras[cam_select_idx].move_left(0.05f);
   if (key == GLFW_KEY_D && action == GLFW_PRESS)
     cameras[cam_select_idx].move_right(0.05f);
+
   if (key == GLFW_KEY_W && action == GLFW_PRESS)
     cameras[cam_select_idx].move_forward(0.05f);
   if (key == GLFW_KEY_S && action == GLFW_PRESS)
     cameras[cam_select_idx].move_backward(0.05f);
+
+  if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+    cameras[cam_select_idx].move_down(0.05f);
+  if (key == GLFW_KEY_C && action == GLFW_PRESS)
+    cameras[cam_select_idx].move_up(0.05f);
+
+  // Camera Rotate
+  if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+    cameras[cam_select_idx].rotate_z(-5.0f);
+  if (key == GLFW_KEY_E && action == GLFW_PRESS)
+    cameras[cam_select_idx].rotate_z(5.0f);
+
+  if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+    cameras[cam_select_idx].rotate_y(-5.0f);
+  if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+    cameras[cam_select_idx].rotate_y(5.0f);
+
+  if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+    cameras[cam_select_idx].rotate_x(5.0f);
+  if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+    cameras[cam_select_idx].rotate_x(-5.0f);
 }
 
 void init_window(GLFWwindow *window)
@@ -286,8 +309,24 @@ bool init_scene_from_file(const std::string &filename)
     cameras.push_back(camera);
   }
 
-  // Init Light Position
-  light.pos = glm::vec3(0.180127, 0.498695, 0.847856);
+  // Init Light
+  float bg_r, bg_g, bg_b;
+  float lp_x, lp_y, lp_z;
+  float ambient_r, ambient_g, ambient_b;
+  float diffuse_r, diffuse_g, diffuse_b;
+  float specular_r, specular_g, specular_b;
+
+  fin >> bg_r >> bg_g >> bg_b;
+  fin >> lp_x >> lp_y >> lp_z;
+  fin >> ambient_r >> ambient_g >> ambient_b;
+  fin >> diffuse_r >> diffuse_g >> diffuse_b;
+  fin >> specular_r >> specular_g >> specular_b;
+
+  g_clear_color = glm::vec3(bg_r, bg_g, bg_b);
+  light.pos = glm::vec3(lp_x, lp_y, lp_z);
+  light.ambient = glm::vec3(ambient_r, ambient_g, ambient_b);
+  light.diffuse = glm::vec3(diffuse_r, diffuse_g, diffuse_b);
+  light.specular = glm::vec3(specular_r, specular_g, specular_b);
 
   return true;
 }
@@ -368,7 +407,7 @@ void compose_imgui_frame()
     for (int i = 0; i < cameras.size(); i++)
     {
       char camera_name[10];
-      sprintf(camera_name, "%s %d", "Camera", i);
+      sprintf(camera_name, "%s %d", "Camera", i + 1);
       ImGui::RadioButton(camera_name, &cam_select_idx, i);
     }
     ImGui::Checkbox("Perspective", &g_is_perspective);
@@ -384,7 +423,7 @@ void compose_imgui_frame()
   }
 
   {
-    ImGui::Begin("Light");
+    ImGui::Begin("Light Control");
 
     ImGui::ColorEdit3("Background Color", glm::value_ptr(g_clear_color));
 
@@ -392,9 +431,9 @@ void compose_imgui_frame()
     ImGui::gizmo3D("Light Direction", vec);
     light.pos = -vec;
 
-    ImGui::ColorEdit3("Ambient Light", glm::value_ptr(light.ambient));
-    ImGui::ColorEdit3("Diffuse Light", glm::value_ptr(light.diffuse));
-    ImGui::ColorEdit3("Specular Light", glm::value_ptr(light.specular));
+    ImGui::ColorEdit3("Ambient", glm::value_ptr(light.ambient));
+    ImGui::ColorEdit3("Diffuse", glm::value_ptr(light.diffuse));
+    ImGui::ColorEdit3("Specular", glm::value_ptr(light.specular));
 
     ImGui::End();
   }
@@ -406,13 +445,13 @@ void compose_imgui_frame()
     std::string label;
     for (int i = 0; i < mMeshes.size(); ++i)
     {
-      label = mMeshes[i].mMaterial.name + "_Ambient";
+      label = "Ambient";
       ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.ambient));
-      // label = mMeshes[i].mMaterial.name + "_Diffuse";
-      // ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.diffuse));
-      label = mMeshes[i].mMaterial.name + "_Specular";
+      label = "Diffuse";
+      ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.diffuse));
+      label = "Specular";
       ImGui::ColorEdit3(label.c_str(), glm::value_ptr(mMeshes[i].mMaterial.specular));
-      label = mMeshes[i].mMaterial.name + "_Shininess";
+      label = "Shininess";
       ImGui::SliderFloat(label.c_str(), &mMeshes[i].mMaterial.shininess, 5.0f, 500.0f);
       ImGui::NewLine();
     }
@@ -421,13 +460,13 @@ void compose_imgui_frame()
   }
 
   {
-    ImGui::Begin("Load/Store Control");
+    ImGui::Begin("Load/Store");
 
-    if (ImGui::Button("Save", ImVec2(120.0f, 25.0f)))
+    if (ImGui::Button("Save", ImVec2(125.0f, 25.0f)))
     {
       store_info("output.txt");
     }
-    if (ImGui::Button("Load", ImVec2(120.0f, 25.0f)))
+    if (ImGui::Button("Load", ImVec2(125.0f, 25.0f)))
     {
       if (!load_info("output.txt"))
       {
@@ -638,6 +677,17 @@ void store_info(const std::string &filename)
     fout << rotate[0][1] << " " << rotate[1][1] << " " << rotate[2][1] << " " << rotate[3][1] << "\n";
     fout << rotate[0][2] << " " << rotate[1][2] << " " << rotate[2][2] << " " << rotate[3][2] << "\n";
     fout << rotate[0][3] << " " << rotate[1][3] << " " << rotate[2][3] << " " << rotate[3][3] << "\n";
+
+    // current material
+    std::vector<Mesh> mMeshes = models[i].meshes();
+
+    for (int j = 0; j < mMeshes.size(); ++j)
+    {
+      fout << mMeshes[j].mMaterial.ambient[0] << " " << mMeshes[j].mMaterial.ambient[1] << " " << mMeshes[j].mMaterial.ambient[2] << "\n";
+      fout << mMeshes[j].mMaterial.diffuse[0] << " " << mMeshes[j].mMaterial.diffuse[1] << " " << mMeshes[j].mMaterial.diffuse[2] << "\n";
+      fout << mMeshes[j].mMaterial.specular[0] << " " << mMeshes[j].mMaterial.specular[1] << " " << mMeshes[j].mMaterial.specular[2] << "\n";
+      fout << mMeshes[j].mMaterial.shininess << "\n";
+    }
   }
 
   // Camera
@@ -705,6 +755,27 @@ bool load_info(const std::string &filename)
                                    r_10, r_11, r_12, r_13,
                                    r_20, r_21, r_22, r_23,
                                    r_30, r_31, r_32, r_33));
+
+    // material
+    std::vector<Mesh> &mMeshes = models[i].meshes();
+
+    for (int j = 0; j < mMeshes.size(); ++j)
+    {
+      float a_r, a_g, a_b;
+      float d_r, d_g, d_b;
+      float s_r, s_g, s_b;
+      float sh;
+
+      fin >> a_r >> a_g >> a_b;
+      fin >> d_r >> d_g >> d_b;
+      fin >> s_r >> s_g >> s_b;
+      fin >> sh;
+
+      mMeshes[j].mMaterial.ambient = glm::vec3(a_r, a_g, a_b);
+      mMeshes[j].mMaterial.diffuse = glm::vec3(d_r, d_g, d_b);
+      mMeshes[j].mMaterial.specular = glm::vec3(s_r, s_g, s_b);
+      mMeshes[j].mMaterial.shininess = sh;
+    }
   }
 
   // Camera

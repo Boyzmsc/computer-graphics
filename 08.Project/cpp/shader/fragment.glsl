@@ -35,9 +35,8 @@ vec3 directional_light()
   color += (u_light_ambient * u_obj_ambient);
   
   // diffuse
-  // 텍스쳐 색상을 diffuse reflection coefficient로 활용하여 Phong reflection model을 구현
-  
-  vec3 u_obj_diffuse = texture2D(u_diffuse_texture, v_texcoord).rgb;
+  // 텍스쳐 색상을 Diffuse Reflection Coefficient로 활용하여 Phong Reflection Model을 구현
+  vec3 u_obj_diffuse = vec3(texture2D(u_diffuse_texture, v_texcoord));
   float ndotl = max(dot(normal_wc, light_dir), 0.0);
   color += (ndotl * u_light_diffuse * u_obj_diffuse);
 
